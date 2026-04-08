@@ -4,7 +4,8 @@ import type { Course, LearningStyle, Module, AIModel, BloomLevel } from './types
 import SyllabusInput from './components/SyllabusInput';
 import ModuleSidebar from './components/ModuleSidebar';
 import ArtifactViewer from './components/ArtifactViewer';
-import { Sparkles, ArrowLeft, Loader2, LogOut } from 'lucide-react';
+import CustomCourseGenerator from './components/CustomCourseGenerator';
+import { Sparkles, ArrowLeft, Loader2, LogOut, Layout, Settings } from 'lucide-react';
 import { auth, db, handleFirestoreError, OperationType } from './lib/firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -17,6 +18,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [activeModuleId, setActiveModuleId] = useState<string | null>(null);
   const [activeArtifact, setActiveArtifact] = useState<string | null>(null);
+  const [view, setView] = useState<'designer' | 'custom'>('designer');
   const [generationOptions, setGenerationOptions] = useState<{
     learningStyle: LearningStyle;
     classSize: number;
@@ -265,7 +267,11 @@ export default function App() {
         </header>
 
         <main className="flex-1 overflow-hidden">
-          {course && activeArtifact ? (
+          {view === 'custom' ? (
+            <div className="h-full overflow-y-auto bg-slate-50/50">
+              <CustomCourseGenerator />
+            </div>
+          ) : course && activeArtifact ? (
             <ArtifactViewer 
               course={course}
               activeModuleId={activeModuleId}

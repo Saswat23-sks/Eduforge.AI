@@ -1,7 +1,19 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { Course, LearningStyle, AIModel, BloomLevel, LearningOutcome, Lecture, QuizQuestion, Assignment, PedagogyReport, CurriculumSequencing, ReadingPlan, AdaptiveContent } from '../types/course';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+async function callAiApi(systemPrompt: string, prompt: string, model?: string, config?: any) {
+  const response = await fetch('/api/ai/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ systemPrompt, prompt, model, config })
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'AI API call failed');
+  }
+  
+  return response.json();
+}
 
 const SYSTEM_PROMPT = `You are an expert pedagogical AI assistant specializing in undergraduate course design. 
 Your goal is to transform raw syllabi or topic lists into structured, pedagogically-aligned course materials.
@@ -90,14 +102,6 @@ export async function generateCourse(input: string, options: {
   creativity: number;
   bloomLevel: BloomLevel;
 }): Promise<Course> {
-  const model = genAI.getGenerativeModel({ 
-    model: options.model || 'gemini-2.0-flash',
-    generationConfig: { 
-      responseMimeType: 'application/json',
-      temperature: options.creativity
-    }
-  });
-
   const prompt = `
     Raw Syllabus/Topics:
     ${input}
@@ -116,16 +120,10 @@ export async function generateCourse(input: string, options: {
     Return the JSON object.
   `;
 
-  try {
-    const result = await model.generateContent([SYSTEM_PROMPT, prompt]);
-    const response = await result.response;
-    const text = response.text();
-    
-    return JSON.parse(text);
-  } catch (error) {
-    console.error('Error generating course:', error);
-    throw error;
-  }
+  return callAiApi(SYSTEM_PROMPT, prompt, options.model, { 
+    responseMimeType: 'application/json',
+    temperature: options.creativity
+  });
 }
 
 export async function adaptArtifact(
@@ -133,11 +131,6 @@ export async function adaptArtifact(
   type: 'lecture' | 'quiz' | 'assignment' | 'reading', 
   style: LearningStyle
 ) {
-  const model = genAI.getGenerativeModel({ 
-    model: 'gemini-2.0-flash',
-    generationConfig: { responseMimeType: 'application/json' }
-  });
-  
   let styleSpecificInstructions = '';
   if (style === 'active') {
     if (type === 'quiz') {
@@ -159,10 +152,7 @@ export async function adaptArtifact(
     Return the updated JSON object.
   `;
 
-  const result = await model.generateContent([SYSTEM_PROMPT, prompt]);
-  const response = await result.response;
-  const text = response.text();
-  return JSON.parse(text);
+  return callAiApi(SYSTEM_PROMPT, prompt, 'gemini-2.0-flash', { responseMimeType: 'application/json' });
 }
 
 export async function validatePedagogy(
@@ -171,11 +161,6 @@ export async function validatePedagogy(
   quizzes: QuizQuestion[],
   assignments: Assignment[]
 ): Promise<PedagogyReport> {
-  const model = genAI.getGenerativeModel({ 
-    model: 'gemini-2.0-flash',
-    generationConfig: { responseMimeType: 'application/json' }
-  });
-
   const prompt = `
     You are a pedagogy validation engine.
     
@@ -204,18 +189,10 @@ export async function validatePedagogy(
     }
   `;
 
-  const result = await model.generateContent([SYSTEM_PROMPT, prompt]);
-  const response = await result.response;
-  const text = response.text();
-  return JSON.parse(text);
+  return callAiApi(SYSTEM_PROMPT, prompt, 'gemini-2.0-flash', { responseMimeType: 'application/json' });
 }
 
 export async function sequenceCurriculum(topics: string[]): Promise<CurriculumSequencing> {
-  const model = genAI.getGenerativeModel({ 
-    model: 'gemini-2.0-flash',
-    generationConfig: { responseMimeType: 'application/json' }
-  });
-
   const prompt = `
     You are a curriculum sequencing expert.
     
@@ -240,18 +217,10 @@ export async function sequenceCurriculum(topics: string[]): Promise<CurriculumSe
     }
   `;
 
-  const result = await model.generateContent([SYSTEM_PROMPT, prompt]);
-  const response = await result.response;
-  const text = response.text();
-  return JSON.parse(text);
+  return callAiApi(SYSTEM_PROMPT, prompt, 'gemini-2.0-flash', { responseMimeType: 'application/json' });
 }
 
 export async function generateReadingPlan(orderedTopics: string[]): Promise<ReadingPlan> {
-  const model = genAI.getGenerativeModel({ 
-    model: 'gemini-2.0-flash',
-    generationConfig: { responseMimeType: 'application/json' }
-  });
-
   const prompt = `
     You are an academic course planner.
     
@@ -281,18 +250,10 @@ export async function generateReadingPlan(orderedTopics: string[]): Promise<Read
     }
   `;
 
-  const result = await model.generateContent([SYSTEM_PROMPT, prompt]);
-  const response = await result.response;
-  const text = response.text();
-  return JSON.parse(text);
+  return callAiApi(SYSTEM_PROMPT, prompt, 'gemini-2.0-flash', { responseMimeType: 'application/json' });
 }
 
 export async function transformToAdaptiveContent(topic: string, content: string): Promise<AdaptiveContent> {
-  const model = genAI.getGenerativeModel({ 
-    model: 'gemini-2.0-flash',
-    generationConfig: { responseMimeType: 'application/json' }
-  });
-
   const prompt = `
     You are an adaptive learning system.
     
@@ -326,18 +287,10 @@ export async function transformToAdaptiveContent(topic: string, content: string)
     }
   `;
 
-  const result = await model.generateContent([SYSTEM_PROMPT, prompt]);
-  const response = await result.response;
-  const text = response.text();
-  return JSON.parse(text);
+  return callAiApi(SYSTEM_PROMPT, prompt, 'gemini-2.0-flash', { responseMimeType: 'application/json' });
 }
 
 export async function generateAssessment(topic: string, learningObjectives: LearningOutcome[]): Promise<QuizQuestion[]> {
-  const model = genAI.getGenerativeModel({ 
-    model: 'gemini-2.0-flash',
-    generationConfig: { responseMimeType: 'application/json' }
-  });
-
   const prompt = `
     You are an assessment designer.
     
@@ -376,19 +329,11 @@ export async function generateAssessment(topic: string, learningObjectives: Lear
     }
   `;
 
-  const result = await model.generateContent([SYSTEM_PROMPT, prompt]);
-  const response = await result.response;
-  const text = response.text();
-  const data = JSON.parse(text);
+  const data = await callAiApi(SYSTEM_PROMPT, prompt, 'gemini-2.0-flash', { responseMimeType: 'application/json' });
   return data.questions;
 }
 
 export async function refineContentWithFeedback(content: string, feedback: string): Promise<{ updated_content: string; changes_made: string[] }> {
-  const model = genAI.getGenerativeModel({ 
-    model: 'gemini-2.0-flash',
-    generationConfig: { responseMimeType: 'application/json' }
-  });
-
   const prompt = `
     You are an AI teaching assistant.
     
@@ -409,8 +354,33 @@ export async function refineContentWithFeedback(content: string, feedback: strin
     }
   `;
 
-  const result = await model.generateContent([SYSTEM_PROMPT, prompt]);
-  const response = await result.response;
-  const text = response.text();
-  return JSON.parse(text);
+  return callAiApi(SYSTEM_PROMPT, prompt, 'gemini-2.0-flash', { responseMimeType: 'application/json' });
+}
+
+export async function generateCustomLecture(topic: string, depth: string, tone: string, duration: number): Promise<{ lecture: string; estimated_duration: string; depth_applied: string; tone_used: string }> {
+  const prompt = `
+    You are a customizable course generator.
+    
+    Input:
+    - Topic: ${topic}
+    - Depth level: ${depth} (beginner/intermediate/advanced)
+    - Tone: ${tone} (academic/conversational)
+    - Duration: ${duration} minutes
+
+    Task:
+    Generate lecture content based on these constraints.
+    - Adjust depth to match the level.
+    - Ensure the content fits within the specified time.
+    - Match the requested tone.
+
+    Return the following JSON structure:
+    {
+      "lecture": "markdown string",
+      "estimated_duration": "string",
+      "depth_applied": "string",
+      "tone_used": "string"
+    }
+  `;
+
+  return callAiApi(SYSTEM_PROMPT, prompt, 'gemini-2.0-flash', { responseMimeType: 'application/json' });
 }
