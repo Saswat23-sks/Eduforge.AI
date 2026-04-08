@@ -151,7 +151,8 @@ export async function generateModuleDetails(module: Module, courseContext: { tit
     ${JSON.stringify(module)}
 
     Task:
-    Flesh out this module with high-quality, detailed pedagogical content:
+    Flesh out this module with high-quality, detailed pedagogical content.
+    IMPORTANT: Keep the content detailed but concise enough to be generated within 10 seconds.
     1. Detailed lecture notes (Markdown) for each lecture.
     2. Full presentation slides (title, content bullets, speaker notes) for each lecture.
     3. Complete quiz questions (options, correct answer, explanation).
