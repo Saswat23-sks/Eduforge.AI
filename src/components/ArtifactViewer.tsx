@@ -11,10 +11,21 @@ interface ArtifactViewerProps {
   type: string;
   onUpdateModule: (module: Module) => void;
   onUpdateCourse: (course: Course) => void;
+  onGenerateDetails: (moduleId: string) => void;
   learningStyle: LearningStyle;
+  isGeneratingDetails?: boolean;
 }
 
-export default function ArtifactViewer({ course, activeModuleId, type, onUpdateModule, onUpdateCourse, learningStyle }: ArtifactViewerProps) {
+export default function ArtifactViewer({ 
+  course, 
+  activeModuleId, 
+  type, 
+  onUpdateModule, 
+  onUpdateCourse, 
+  onGenerateDetails,
+  learningStyle,
+  isGeneratingDetails 
+}: ArtifactViewerProps) {
   const [isRefining, setIsRefining] = useState(false);
   const module = course.modules.find(m => m.id === activeModuleId);
 
@@ -316,7 +327,33 @@ export default function ArtifactViewer({ course, activeModuleId, type, onUpdateM
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 min-h-[600px]">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 min-h-[600px] relative">
+          {!module?.isDetailed && (type === 'lectures' || type === 'lecture-notes' || type === 'slides' || type === 'quizzes' || type === 'assignments') ? (
+            <div className="absolute inset-0 z-10 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center p-12 text-center space-y-6">
+              <div className="w-20 h-20 bg-indigo-50 rounded-3xl flex items-center justify-center text-indigo-600">
+                <Sparkles className="w-10 h-10" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-bold text-slate-900">Module Details Pending</h3>
+                <p className="text-slate-500 max-w-sm mx-auto">
+                  To optimize performance, detailed content for this module is generated on demand. 
+                  This includes lecture notes, slides, and assessments.
+                </p>
+              </div>
+              <button
+                onClick={() => activeModuleId && onGenerateDetails(activeModuleId)}
+                disabled={isGeneratingDetails}
+                className="flex items-center gap-2 px-8 py-4 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 transition-all disabled:opacity-50 shadow-xl shadow-indigo-200"
+              >
+                {isGeneratingDetails ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Sparkles className="w-5 h-5" />
+                )}
+                Generate Detailed Content
+              </button>
+            </div>
+          ) : null}
           {renderContent()}
         </div>
       </div>

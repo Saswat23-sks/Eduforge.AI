@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { generateCourse } from './services/gemini';
-import type { Course, LearningStyle, Module, AIModel, BloomLevel } from './types/course';
+import { generateCourse, generateModuleDetails } from './services/gemini';
+import type { Course, LearningStyle, Module, AIModel, BloomLevel, LearningOutcome } from './types/course';
 import SyllabusInput from './components/SyllabusInput';
 import ModuleSidebar from './components/ModuleSidebar';
 import ArtifactViewer from './components/ArtifactViewer';
@@ -103,7 +103,8 @@ export default function App() {
       }
     } catch (error) {
       console.error(error);
-      alert('Failed to generate course. Please try again.');
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to generate course: ${message}`);
     } finally {
       setIsLoading(false);
     }
@@ -121,6 +122,27 @@ export default function App() {
 
   const handleUpdateCourse = (updatedCourse: Course) => {
     setCourse(updatedCourse);
+  };
+
+  const handleGenerateDetails = async (moduleId: string) => {
+    if (!course || !generationOptions) return;
+    const module = course.modules.find(m => m.id === moduleId);
+    if (!module || module.isDetailed) return;
+
+    setIsLoading(true);
+    try {
+      const detailedModule = await generateModuleDetails(
+        module, 
+        { title: course.title, learningOutcomes: course.learningOutcomes },
+        generationOptions.learningStyle
+      );
+      handleUpdateModule(detailedModule);
+    } catch (error) {
+      console.error('Failed to generate module details:', error);
+      alert('Failed to generate module details. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!isAuthReady) {
@@ -278,7 +300,9 @@ export default function App() {
               type={activeArtifact} 
               onUpdateModule={handleUpdateModule}
               onUpdateCourse={handleUpdateCourse}
+              onGenerateDetails={handleGenerateDetails}
               learningStyle={generationOptions?.learningStyle || 'textual'}
+              isGeneratingDetails={isLoading}
             />
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-4">

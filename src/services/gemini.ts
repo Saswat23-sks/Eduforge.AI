@@ -1,18 +1,24 @@
-import type { Course, LearningStyle, AIModel, BloomLevel, LearningOutcome, Lecture, QuizQuestion, Assignment, PedagogyReport, CurriculumSequencing, ReadingPlan, AdaptiveContent } from '../types/course';
+import type { Course, LearningStyle, AIModel, BloomLevel, LearningOutcome, Lecture, QuizQuestion, Assignment, PedagogyReport, CurriculumSequencing, ReadingPlan, AdaptiveContent, Module } from '../types/course';
 
 async function callAiApi(systemPrompt: string, prompt: string, model?: string, config?: any) {
-  const response = await fetch('/api/ai/generate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ systemPrompt, prompt, model, config })
-  });
-  
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'AI API call failed');
+  try {
+    const response = await fetch('/api/ai/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ systemPrompt, prompt, model, config })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'AI API call failed');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('API Call Error:', error);
+    throw error;
   }
-  
-  return response.json();
 }
 
 const SYSTEM_PROMPT = `You are an expert pedagogical AI assistant specializing in undergraduate course design. 
@@ -113,9 +119,16 @@ export async function generateCourse(input: string, options: {
     - Target Pedagogical Depth (Bloom's Taxonomy): ${options.bloomLevel}
     - Creativity Level: ${options.creativity} (0 is precise, 1 is highly creative)
 
-    Generate a comprehensive course structure aligned with the specified Bloom's Taxonomy level. 
-    IMPORTANT: Provide detailed lecture notes and slides, but keep them concise enough to fit in a single response. 
-    If the course is very long, focus on the first 4-5 modules in high detail and provide outlines for the rest.
+    Task:
+    Generate the HIGH-LEVEL STRUCTURE of a comprehensive course. 
+    DO NOT generate detailed lecture notes or slides yet. 
+    Focus on:
+    1. Course title and description.
+    2. Learning outcomes.
+    3. Topic mapping.
+    4. A list of modules with titles and brief descriptions.
+    5. For each module, provide a list of lecture titles, but leave lectureNotes and presentationSlides as empty strings/arrays for now.
+    6. Provide readings, quizzes, and assignments as skeletons (titles only).
 
     Return the JSON object.
   `;
@@ -123,6 +136,34 @@ export async function generateCourse(input: string, options: {
   return callAiApi(SYSTEM_PROMPT, prompt, options.model, { 
     responseMimeType: 'application/json',
     temperature: options.creativity
+  });
+}
+
+export async function generateModuleDetails(module: Module, courseContext: { title: string; learningOutcomes: LearningOutcome[] }, style: LearningStyle): Promise<Module> {
+  const prompt = `
+    You are a module detail generator.
+    
+    Course Context:
+    - Title: ${courseContext.title}
+    - Learning Outcomes: ${JSON.stringify(courseContext.learningOutcomes)}
+    
+    Module to Detail:
+    ${JSON.stringify(module)}
+
+    Task:
+    Flesh out this module with high-quality, detailed pedagogical content:
+    1. Detailed lecture notes (Markdown) for each lecture.
+    2. Full presentation slides (title, content bullets, speaker notes) for each lecture.
+    3. Complete quiz questions (options, correct answer, explanation).
+    4. Full assignment descriptions and rubrics.
+    5. Ensure all content is adapted for the ${style} learning style.
+
+    Return the updated Module JSON object. Set isDetailed to true.
+  `;
+
+  return callAiApi(SYSTEM_PROMPT, prompt, 'gemini-2.0-flash', { 
+    responseMimeType: 'application/json',
+    temperature: 0.7
   });
 }
 

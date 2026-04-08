@@ -81,6 +81,7 @@ export interface Module {
   quizzes: QuizQuestion[];
   assignments: Assignment[];
   pedagogyReport?: PedagogyReport;
+  isDetailed?: boolean;
 }
 
 export interface TopicMapping {
