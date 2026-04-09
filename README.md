@@ -1,5 +1,7 @@
 # 🚀 Ghost Terminal – AI-Assisted Course Creation
 
+AI-powered platform to automatically generate structured undergraduate courses, lectures, and assessments using advanced pedagogical frameworks.
+
 ## 👥 Team Details
 
 - **Team Number:** 8  
@@ -83,13 +85,30 @@ https://eduforge-ai-s5of.vercel.app/
 ### 📚 Generated Course Structure
 ![Course Output](./assets/screenshot-6.png)
 
+## 🚀 How to Use
+
+1. Sign in with Google  
+2. Enter your syllabus or topic list  
+3. Configure learning preferences (style, class size, accessibility)  
+4. Generate your course structure  
+5. Expand modules into detailed lectures, slides, and assessments
 
 ## 🧰 Tech Stack
 
 - **Frontend:** React 19, TypeScript, Tailwind CSS, Framer Motion, Lucide Icons  
 - **Backend:** Node.js, Express, Vercel Serverless Functions  
 - **Database/Auth:** Firebase Auth, Cloud Firestore  
-- **AI Models:** Google Gemini 2.0 Flash, Groq (Llama 3.3 70B)  
+- **AI Models:** Google Gemini 2.0 Flash, Groq (Llama 3.3 70B)
+
+## 🛠 Run Locally
+
+```bash
+git clone https://github.com/Saswat23-sks/Eduforge.AI.git
+cd Eduforge.AI
+npm install
+npm run dev
+```
+⚠️ Note: Add your Firebase and API keys in `.env` before running locally.
 
 
 ## 💡 Vision
